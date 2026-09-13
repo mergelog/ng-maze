@@ -1,0 +1,249 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/axentax/ng-maze/docs/ngmaze.schema.json",
+  "title": "ngmaze analysis output",
+  "type": "object",
+  "required": ["ngmazeVersion", "query", "meta", "global", "result", "error"],
+  "additionalProperties": false,
+  "properties": {
+    "ngmazeVersion": { "type": "string" },
+    "query": {
+      "type": "object",
+      "required": ["component", "direction", "depth", "all", "why", "ignoreAmbiguous"],
+      "additionalProperties": false,
+      "properties": {
+        "component": { "type": ["string", "null"] },
+        "direction": { "enum": ["children", "parents"] },
+        "depth": { "type": ["integer", "null"], "minimum": 1 },
+        "all": { "type": "boolean" },
+        "why": { "type": "boolean" },
+        "ignoreAmbiguous": { "type": "boolean" }
+      }
+    },
+    "meta": { "$ref": "#/definitions/meta" },
+    "global": {
+      "type": "object",
+      "required": ["stats", "diagnostics", "detectionGaps"],
+      "additionalProperties": false,
+      "properties": {
+        "stats": { "$ref": "#/definitions/stats" },
+        "diagnostics": { "type": "array", "items": { "$ref": "#/definitions/diagnostic" } },
+        "detectionGaps": { "type": "array", "items": { "$ref": "#/definitions/detectionGap" } }
+      }
+    },
+    "result": {
+      "type": "object",
+      "required": ["stats", "rootCandidates", "components", "edges", "routes", "externalUsages", "ambiguousUsages", "tree", "trees", "unreachable", "diagnostics"],
+      "additionalProperties": false,
+      "properties": {
+        "stats": { "$ref": "#/definitions/stats" },
+        "rootCandidates": { "type": "array", "items": { "type": "string" } },
+        "components": { "type": "array", "items": { "$ref": "#/definitions/component" } },
+        "edges": { "type": "array", "items": { "$ref": "#/definitions/edge" } },
+        "routes": { "type": "array", "items": { "$ref": "#/definitions/route" } },
+        "externalUsages": { "type": "array", "items": { "$ref": "#/definitions/externalUsage" } },
+        "ambiguousUsages": { "type": "array", "items": { "$ref": "#/definitions/ambiguousUsage" } },
+        "tree": { "oneOf": [{ "$ref": "#/definitions/treeNode" }, { "type": "null" }] },
+        "trees": { "type": "array", "items": { "$ref": "#/definitions/treeNode" } },
+        "unreachable": { "type": "array", "items": { "type": "string" } },
+        "diagnostics": { "type": "array", "items": { "$ref": "#/definitions/diagnostic" } }
+      }
+    },
+    "error": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["code", "message", "candidates"],
+          "additionalProperties": false,
+          "properties": {
+            "code": { "enum": ["not-found", "ambiguous"] },
+            "message": { "type": "string" },
+            "candidates": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "workspaceRoot", "analysisRoot", "angularProjects", "tsconfigFiles",
+        "typescriptVersion", "typescriptSource", "angularCompilerVersion",
+        "angularCompilerSource", "sourceFileCount", "excludedFileCount", "templateFileCount"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "workspaceRoot": { "type": "string" },
+        "analysisRoot": { "type": "string" },
+        "angularProjects": { "type": "array", "items": { "type": "string" } },
+        "tsconfigFiles": { "type": "array", "items": { "type": "string" } },
+        "typescriptVersion": { "type": "string" },
+        "typescriptSource": { "enum": ["project", "bundled"] },
+        "angularCompilerVersion": { "type": "string" },
+        "angularCompilerSource": { "enum": ["project", "bundled"] },
+        "sourceFileCount": { "type": "integer", "minimum": 0 },
+        "excludedFileCount": { "type": "integer", "minimum": 0 },
+        "templateFileCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "stats": {
+      "type": "object",
+      "required": ["components", "templateUsages", "dynamicUsages", "routeEntries", "externalUsages"],
+      "additionalProperties": false,
+      "properties": {
+        "components": { "type": "integer", "minimum": 0 },
+        "templateUsages": { "type": "integer", "minimum": 0 },
+        "dynamicUsages": { "type": "integer", "minimum": 0 },
+        "routeEntries": { "type": "integer", "minimum": 0 },
+        "externalUsages": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "location": {
+      "type": "object",
+      "required": ["file", "line", "column", "precision"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 },
+        "precision": { "enum": ["exact", "approximate"] }
+      }
+    },
+    "component": {
+      "type": "object",
+      "required": [
+        "id", "className", "selector", "selectorUnresolved", "templateKind",
+        "templateFile", "extendsComponent", "effectiveStandalone", "standaloneExplicit",
+        "angularProject", "file", "location"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "className": { "type": "string" },
+        "extendsComponent": { "type": ["string", "null"] },
+        "selector": { "type": ["string", "null"] },
+        "selectorUnresolved": { "type": "boolean" },
+        "templateKind": { "enum": ["inline", "external", "none"] },
+        "templateFile": { "type": ["string", "null"] },
+        "effectiveStandalone": { "type": "boolean" },
+        "standaloneExplicit": { "type": ["boolean", "null"] },
+        "angularProject": { "type": ["string", "null"] },
+        "file": { "type": "string" },
+        "location": { "$ref": "#/definitions/location" }
+      }
+    },
+    "edgeKind": { "enum": ["template", "ng-component-outlet", "dialog", "create-component"] },
+    "edge": {
+      "type": "object",
+      "required": ["from", "to", "kind", "location", "order"],
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "kind": { "$ref": "#/definitions/edgeKind" },
+        "location": { "$ref": "#/definitions/location" },
+        "order": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "route": {
+      "type": "object",
+      "required": ["path", "target", "targetKind", "outlet", "location", "angularProject"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string" },
+        "target": { "type": "string" },
+        "targetKind": { "enum": ["component", "loadComponent"] },
+        "outlet": { "type": ["string", "null"] },
+        "location": { "$ref": "#/definitions/location" },
+        "angularProject": { "type": ["string", "null"] }
+      }
+    },
+    "externalUsage": {
+      "type": "object",
+      "required": ["callerKind", "callerName", "target", "kind", "location"],
+      "additionalProperties": false,
+      "properties": {
+        "callerKind": { "enum": ["class", "function", "file"] },
+        "callerName": { "type": "string" },
+        "target": { "type": "string" },
+        "kind": { "$ref": "#/definitions/edgeKind" },
+        "location": { "$ref": "#/definitions/location" }
+      }
+    },
+    "ambiguousUsage": {
+      "type": "object",
+      "required": ["owner", "callerKind", "callerName", "kind", "expression", "message", "location", "candidates"],
+      "additionalProperties": false,
+      "properties": {
+        "owner": { "type": ["string", "null"] },
+        "callerKind": { "enum": ["class", "function", "file"] },
+        "callerName": { "type": "string" },
+        "kind": { "enum": ["ng-component-outlet", "dialog", "create-component"] },
+        "expression": { "type": "string" },
+        "message": { "type": "string" },
+        "location": { "$ref": "#/definitions/location" },
+        "candidates": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "required": ["code", "message", "file", "location", "owner"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "component-metadata", "multiple-ngmodule-declarations", "missing-template",
+            "template-parse-error", "unresolved-scope", "ambiguous-selector",
+            "selector-out-of-scope", "unresolved-route", "unresolved-dynamic"
+          ]
+        },
+        "message": { "type": "string" },
+        "file": { "type": "string" },
+        "location": { "$ref": "#/definitions/location" },
+        "owner": { "type": ["string", "null"] },
+        "detail": { "type": "string" }
+      }
+    },
+    "detectionGap": {
+      "type": "object",
+      "required": ["code", "message", "file", "location", "owner", "candidates"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "enum": ["decorated-but-not-catalogued", "excluded-source", "unresolved-dynamic-target", "unresolved-route-loader", "view-relocation", "unsupported-angular-api", "nested-workspace"] },
+        "message": { "type": "string" },
+        "file": { "type": "string" },
+        "location": { "$ref": "#/definitions/location" },
+        "owner": { "type": ["string", "null"] },
+        "detail": { "type": "string" },
+        "candidates": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "treeNode": {
+      "type": "object",
+      "required": ["id", "className", "cycle", "truncated", "occurrences", "children", "ambiguousChildren"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "className": { "type": "string" },
+        "cycle": { "type": "boolean" },
+        "truncated": { "type": "boolean" },
+        "occurrences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["kind", "location"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": { "$ref": "#/definitions/edgeKind" },
+              "location": { "$ref": "#/definitions/location" }
+            }
+          }
+        },
+        "children": { "type": "array", "items": { "$ref": "#/definitions/treeNode" } },
+        "ambiguousChildren": { "type": "array", "items": { "$ref": "#/definitions/ambiguousUsage" } }
+      }
+    }
+  }
+}

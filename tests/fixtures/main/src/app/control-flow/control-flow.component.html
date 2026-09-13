@@ -1,0 +1,23 @@
+@if (flag) {
+  <basic-leaf />
+} @else {
+  <basic-leaf />
+}
+@for (item of items; track item) {
+  <basic-leaf />
+} @empty {
+  <basic-leaf />
+}
+@switch (mode) {
+  @case (1) { <basic-leaf /> }
+  @default { <basic-leaf /> }
+}
+@defer {
+  <basic-leaf />
+} @placeholder {
+  <basic-leaf />
+} @loading {
+  <basic-leaf />
+} @error {
+  <basic-leaf />
+}

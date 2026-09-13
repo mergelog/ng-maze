@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "projects": {
+    "web": {
+      "projectType": "application",
+      "root": "apps/web",
+      "sourceRoot": "apps/web/src",
+      "architect": {
+        "build": { "builder": "@angular/build:application", "options": { "tsConfig": "apps/web/tsconfig.app.json" } }
+      }
+    },
+    "ui": {
+      "projectType": "library",
+      "root": "libs/ui",
+      "sourceRoot": "libs/ui/src",
+      "architect": {
+        "build": { "builder": "@angular/build:ng-packagr", "options": { "tsConfig": "libs/ui/tsconfig.lib.json" } }
+      }
+    }
+  }
+}

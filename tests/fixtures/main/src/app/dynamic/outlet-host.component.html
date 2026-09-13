@@ -1,0 +1,9 @@
+<ng-container [ngComponentOutlet]="outletComponent"></ng-container>
+<ng-container [ngComponentOutlet]="runtimeComponent"></ng-container>
+<ng-container [ngComponentOutlet]="outletFromGetter"></ng-container>
+<ng-container [ngComponentOutlet]="conditionalComponent"></ng-container>
+<ng-container [ngComponentOutlet]="mappedComponent"></ng-container>
+<ng-container [ngComponentOutlet]="staticMappedComponent"></ng-container>
+<ng-container [ngComponentOutlet]="runtimeFlag ? firstComponent : secondComponent"></ng-container>
+<ng-container [ngComponentOutlet]="componentMap[runtimeKey]"></ng-container>
+<ng-container [ngTemplateOutlet]="runtimeTemplate"></ng-container>
