@@ -58,9 +58,7 @@ npx mergelog/ng-maze --all                            # every root tree
 npx mergelog/ng-maze --all --ignore-ambiguous         # hide unresolved dynamic placeholders
 npx mergelog/ng-maze ProjectsPageComponent -o tree.txt
 npx mergelog/ng-maze --json -o component-graph.json
-npx mergelog/ng-maze ProjectsPageComponent --md        # deprecated: linked Markdown tree at <project>/ng-maze-YYYYMMDD-HHMMSS.md
-npx mergelog/ng-maze ProjectsPageComponent --mdc       # deprecated: compact box-drawing Markdown tree
-npx mergelog/ng-maze ProjectsPageComponent --mdh       # formatter-safe HTML box-drawing Markdown tree
+npx mergelog/ng-maze ProjectsPageComponent --mdh       # formatter-safe HTML box-drawing Markdown tree at <project>/ng-maze-ProjectsPageComponent-YYYYMMDD-HHMMSS.md
 npx mergelog/ng-maze ProjectsPageComponent -p /path/to/angular/project
 ```
 
@@ -80,8 +78,6 @@ A component can be named by class name, by selector, or by its full ComponentId
 | `--all` | print every root tree plus unreachable components |
 | `--json` | machine readable output |
 | `--mdh` | write a linked box-drawing tree inside HTML `<pre>`; recommended when the Markdown will be formatted |
-| `--md` | deprecated: write a linked Markdown tree to `ng-maze-YYYYMMDD-HHMMSS.md` in the analysis root |
-| `--mdc` | deprecated: write a linked box-drawing Markdown tree; use it before running a Markdown formatter |
 | `-o, --output <file>` | write to a file (never with ANSI colours) |
 | `--angular-project <name>` | analyse only this `angular.json` project |
 | `--tsconfig <path>` | use this tsconfig as the source of compilerOptions |
@@ -91,9 +87,11 @@ A component can be named by class name, by selector, or by its full ComponentId
 Combination rules are checked, never silently ignored: `--all` excludes a
 component argument, `--parents` needs one, `--why` needs a component or `--all`,
 `--depth` must be an integer from 1 to 1,000, `--angular-project` cannot be
-combined with `--tsconfig`, and `--md` / `--mdc` / `--mdh` cannot be combined with each
-other, `--json`, or `--output`. The generated Markdown lives at the analysis
+combined with `--tsconfig`, and `--mdh` cannot be combined with `--json` or
+`--output`. The generated Markdown lives at the analysis
 root so each component label can link to its source file with a relative path.
+When a component is selected, its resolved class name is included in the generated
+file name; project summaries use the timestamp-only form.
 A generated Markdown file is never overwritten: a second run in the same second
 writes `…-2.md`. Because these files land in the analysed project, adding
 `ng-maze-*.md` to its `.gitignore` is usually what you want.

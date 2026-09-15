@@ -55,9 +55,7 @@ npx mergelog/ng-maze --all                            # すべてのルートツ
 npx mergelog/ng-maze --all --ignore-ambiguous         # 解決できない動的コンポーネントのプレースホルダーを隠す
 npx mergelog/ng-maze ProjectsPageComponent -o tree.txt
 npx mergelog/ng-maze --json -o component-graph.json
-npx mergelog/ng-maze ProjectsPageComponent --md        # <project>/ng-maze-YYYYMMDD-HHMMSS.md にリンク付きMarkdown treeを保存
-npx mergelog/ng-maze ProjectsPageComponent --mdc       # 非推奨: 罫線付きのコンパクトなMarkdown treeを保存
-npx mergelog/ng-maze ProjectsPageComponent --mdh       # 非推奨: formatter耐性のあるHTML罫線ツリーを保存
+npx mergelog/ng-maze ProjectsPageComponent --mdh       # <project>/ng-maze-ProjectsPageComponent-YYYYMMDD-HHMMSS.md に formatter耐性のあるHTML罫線ツリーを保存
 npx mergelog/ng-maze ProjectsPageComponent -p /path/to/angular/project
 ```
 
@@ -75,15 +73,13 @@ npx mergelog/ng-maze ProjectsPageComponent -p /path/to/angular/project
 | `--all` | すべてのルートツリーと到達不能なコンポーネントを表示 |
 | `--json` | 機械可読形式で出力 |
 | `--mdh` | HTML の `<pre>` 内へリンク付き罫線ツリーを保存。Markdown整形後も見やすい形式 |
-| `--md` | (非推奨)解析ルート直下の `ng-maze-YYYYMMDD-HHMMSS.md` にリンク付きMarkdown treeを保存 |
-| `--mdc` | (非推奨)リンク付き罫線ツリーを保存。Markdown整形前に見やすい形式 |
 | `-o, --output <file>` | ファイルへ出力（ANSI カラーは常に無効） |
 | `--angular-project <name>` | 指定した `angular.json` プロジェクトだけを解析 |
 | `--tsconfig <path>` | compilerOptions の取得元として、この tsconfig を使用 |
 | `--verbose` | 解決処理と所要時間の詳細を stderr に出力 |
 | `--help`, `--version` | |
 
-オプションの組み合わせは検証され、黙って無視されることはありません。`--all` とコンポーネント引数は同時に指定できません。`--parents` にはコンポーネントの指定が必要です。`--why` にはコンポーネントまたは `--all` の指定が必要です。`--depth` には 1 から 1,000 の整数が必要です。また、`--angular-project` と `--tsconfig`、`--md` / `--mdc` / `--mdh` 同士、`--md` / `--mdc` / `--mdh` と `--json` / `--output` は同時に指定できません。Markdown は解析ルート直下へ保存するため、各クラス名をソースファイルへの相対リンクにできます。生成した Markdown を上書きすることはありません。同じ秒に 2 回実行した場合、2 つ目は `…-2.md` になります。生成物は解析対象プロジェクト内に置かれるため、通常はそのプロジェクトの `.gitignore` に `ng-maze-*.md` を追加しておくとよいでしょう。
+オプションの組み合わせは検証され、黙って無視されることはありません。`--all` とコンポーネント引数は同時に指定できません。`--parents` にはコンポーネントの指定が必要です。`--why` にはコンポーネントまたは `--all` の指定が必要です。`--depth` には 1 から 1,000 の整数が必要です。また、`--angular-project` と `--tsconfig`、`--mdh` と `--json` / `--output` は同時に指定できません。Markdown は解析ルート直下へ保存するため、各クラス名をソースファイルへの相対リンクにできます。コンポーネントを指定した場合、解決されたクラス名をファイル名に含め、プロジェクト概要は従来どおりタイムスタンプだけの形式になります。生成した Markdown を上書きすることはありません。同じ秒に 2 回実行した場合、2 つ目は `…-2.md` になります。生成物は解析対象プロジェクト内に置かれるため、通常はそのプロジェクトの `.gitignore` に `ng-maze-*.md` を追加しておくとよいでしょう。
 
 ### ノード上限
 

@@ -33,9 +33,9 @@ export function buildCommand(version: string): Command {
     .option('--ignore-ambiguous', 'hide unresolved dynamic-component placeholders from trees', false)
     .option('--all', 'print the tree of every root component', false)
     .option('--json', 'print the result as JSON', false)
-    .option('--md', 'write a linked Markdown tree to ng-maze-YYYYMMDD-HHMMSS.md in the analysis root', false)
-    .option('--mdc', 'write a compact box-drawing Markdown tree to ng-maze-YYYYMMDD-HHMMSS.md', false)
-    .option('--mdh', 'write a formatter-safe HTML <pre> box-drawing Markdown tree to ng-maze-YYYYMMDD-HHMMSS.md', false)
+    .option('--md', 'write a linked Markdown tree to ng-maze-[ComponentName-]YYYYMMDD-HHMMSS.md in the analysis root', false)
+    .option('--mdc', 'write a compact box-drawing Markdown tree to ng-maze-[ComponentName-]YYYYMMDD-HHMMSS.md', false)
+    .option('--mdh', 'write a formatter-safe HTML <pre> box-drawing Markdown tree to ng-maze-[ComponentName-]YYYYMMDD-HHMMSS.md', false)
     .option('-o, --output <file>', 'write the result to a file instead of stdout')
     .addOption(new Option('--angular-project <name>', 'analyse only this angular.json project'))
     .addOption(new Option('--tsconfig <path>', 'use this tsconfig as the source of compilerOptions'))
@@ -72,7 +72,7 @@ export function validate(options: CliOptions): void {
     throw new UserError('--md, --mdc, and --mdh cannot be combined with --json.');
   }
   if (markdown && options.output) {
-    throw new UserError('--md, --mdc, and --mdh write ng-maze-YYYYMMDD-HHMMSS.md in the analysis root and cannot be combined with --output.');
+    throw new UserError('--md, --mdc, and --mdh write ng-maze-[ComponentName-]YYYYMMDD-HHMMSS.md in the analysis root and cannot be combined with --output.');
   }
   if (options.depth !== undefined && (!Number.isInteger(options.depth) || options.depth < 1 || options.depth > MAX_TREE_DEPTH)) {
     throw new UserError(`--depth must be an integer from 1 to ${MAX_TREE_DEPTH}.`);

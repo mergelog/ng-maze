@@ -179,7 +179,7 @@ describe('CLI behaviour', () => {
     let target: string | undefined;
     try {
       const { code, stdout } = await invoke({ component: 'ChildComponent', project, md: true }, true);
-      const saved = stdout.trim().match(/^Saved: (.+\/ng-maze-\d{8}-\d{6}\.md)$/);
+      const saved = stdout.trim().match(/^Saved: (.+\/ng-maze-ChildComponent-\d{8}-\d{6}\.md)$/);
       expect(code).toBe(EXIT.OK);
       expect(saved).not.toBeNull();
       target = saved![1]!;
@@ -198,7 +198,7 @@ describe('CLI behaviour', () => {
     let target: string | undefined;
     try {
       const { code, stdout } = await invoke({ component: 'NestedAppComponent', project, md: true });
-      const saved = stdout.trim().match(/^Saved: (.+\/ng-maze-\d{8}-\d{6}\.md)$/);
+      const saved = stdout.trim().match(/^Saved: (.+\/ng-maze-NestedAppComponent-\d{8}-\d{6}\.md)$/);
       expect(code).toBe(EXIT.OK);
       expect(saved).not.toBeNull();
       target = saved![1]!;
@@ -216,7 +216,7 @@ describe('CLI behaviour', () => {
     let target: string | undefined;
     try {
       const { code, stdout } = await invoke({ component: 'ChildComponent', project, mdc: true });
-      const saved = stdout.trim().match(/^Saved: (.+\/ng-maze-\d{8}-\d{6}\.md)$/);
+      const saved = stdout.trim().match(/^Saved: (.+\/ng-maze-ChildComponent-\d{8}-\d{6}\.md)$/);
       expect(code).toBe(EXIT.OK);
       expect(saved).not.toBeNull();
       target = saved![1]!;
@@ -233,7 +233,7 @@ describe('CLI behaviour', () => {
     let target: string | undefined;
     try {
       const { code, stdout } = await invoke({ component: 'ChildComponent', project, mdh: true });
-      const saved = stdout.trim().match(/^Saved: (.+\/ng-maze-\d{8}-\d{6}\.md)$/);
+      const saved = stdout.trim().match(/^Saved: (.+\/ng-maze-ChildComponent-\d{8}-\d{6}\.md)$/);
       expect(code).toBe(EXIT.OK);
       expect(saved).not.toBeNull();
       target = saved![1]!;
@@ -265,7 +265,7 @@ describe('CLI behaviour', () => {
     let target: string | undefined;
     try {
       const { stdout } = await invoke({ project, md: true });
-      target = stdout.trim().match(/^Saved: (.+\.md)$/)![1]!;
+      target = stdout.trim().match(/^Saved: (.+\/ng-maze-\d{8}-\d{6}\.md)$/)![1]!;
       const written = fs.readFileSync(target, 'utf8');
       const list = written.split('## Root / entry candidates')[1]!.trim().split('\n');
       expect(list.length).toBeGreaterThan(1);
@@ -288,6 +288,21 @@ describe('CLI behaviour', () => {
       expect(written.every((file) => fs.existsSync(file))).toBe(true);
     } finally {
       for (const file of written) fs.rmSync(file, { force: true });
+    }
+  });
+
+  it('uses the resolved class name in a generated Markdown file name', async () => {
+    const project = fixturePath('main');
+    let target: string | undefined;
+    try {
+      const { code, stdout } = await invoke({ component: 'basic-child', project, mdh: true });
+      const saved = stdout.trim().match(/^Saved: (.+\/ng-maze-ChildComponent-\d{8}-\d{6}\.md)$/);
+      expect(code).toBe(EXIT.OK);
+      expect(saved).not.toBeNull();
+      target = saved![1]!;
+      expect(fs.existsSync(target)).toBe(true);
+    } finally {
+      if (target) fs.rmSync(target, { force: true });
     }
   });
 

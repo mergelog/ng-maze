@@ -25,9 +25,10 @@ export function useColor(io: Io, options: CliOptions): boolean {
   return io.isTty;
 }
 
-function markdownFileName(now = new Date()): string {
+function markdownFileName(componentName: string | undefined, now = new Date()): string {
   const number = (value: number, width = 2): string => String(value).padStart(width, '0');
-  return `ng-maze-${number(now.getFullYear(), 4)}${number(now.getMonth() + 1)}${number(now.getDate())}`
+  const componentPrefix = componentName ? `${componentName}-` : '';
+  return `ng-maze-${componentPrefix}${number(now.getFullYear(), 4)}${number(now.getMonth() + 1)}${number(now.getDate())}`
     + `-${number(now.getHours())}${number(now.getMinutes())}${number(now.getSeconds())}.md`;
 }
 
@@ -85,11 +86,13 @@ export async function run(options: CliOptions, io: Io, version: string): Promise
   let text: string | null = null;
   let jsonError: JsonError | null = null;
   let view = null as ReturnType<typeof buildView> | null;
+  let selectedComponentName: string | undefined;
 
   if (options.component) {
     const selection = selectComponent(result, options.component);
     if (selection.kind === 'found') {
       view = buildView(result, options, selection.id);
+      selectedComponentName = result.components.find((component) => component.id === selection.id)?.className;
     } else if (selection.kind === 'ambiguous') {
       exitCode = EXIT.AMBIGUOUS;
       jsonError = {
@@ -151,7 +154,7 @@ export async function run(options: CliOptions, io: Io, version: string): Promise
 
   if (options.output || markdown) {
     const target = markdown
-      ? absPosix(path.join(result.meta.analysisRoot, markdownFileName()))
+      ? absPosix(path.join(result.meta.analysisRoot, markdownFileName(selectedComponentName)))
       : absPosix(path.resolve(options.output!));
     let written = target;
     try {
