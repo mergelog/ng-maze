@@ -24,6 +24,7 @@ const options = (overrides: Partial<CliOptions> = {}): CliOptions => ({
   depth: undefined,
   why: false,
   ignoreAmbiguous: false,
+  withRoutes: false,
   all: false,
   json: false,
   md: false,
@@ -80,6 +81,16 @@ describe('CLI behaviour', () => {
     expect(stdout).toContain('LeafComponent');
     expect(stdout).toContain('×4');
     expect(stdout).toContain('参照元');
+  });
+
+  it('adds source-based route edges only when requested', async () => {
+    const plain = await invoke({ component: 'RoutePageComponent' });
+    const routed = await invoke({ component: 'RoutePageComponent', withRoutes: true });
+    const routedWhy = await invoke({ component: 'RoutePageComponent', withRoutes: true, why: true });
+    expect(plain.stdout).not.toContain('[route:');
+    expect(routed.stdout).toContain("'shell/mounted'");
+    expect(routed.stdout).toContain("[route: 'shell/named' @side]");
+    expect(routedWhy.stdout).toContain('shell-routes.ts');
   });
 
   it('shows unresolved dynamic components as ambiguous leaves unless explicitly ignored', async () => {

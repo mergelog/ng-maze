@@ -10,6 +10,7 @@ const base = (overrides: Partial<CliOptions> = {}): CliOptions => ({
   depth: undefined,
   why: false,
   ignoreAmbiguous: false,
+  withRoutes: false,
   all: false,
   json: false,
   md: false,
@@ -39,6 +40,11 @@ describe('CLI parsing (plan section 33.1)', () => {
     expect(parseArgs(['Foo', '--md'], '0.0.0').md).toBe(true);
     expect(parseArgs(['Foo', '--mdc'], '0.0.0').mdc).toBe(true);
     expect(parseArgs(['Foo', '--mdh'], '0.0.0').mdh).toBe(true);
+  });
+
+  it('keeps route edges opt-in', () => {
+    expect(parseArgs([], '0.0.0').withRoutes).toBe(false);
+    expect(parseArgs(['--with-routes'], '0.0.0').withRoutes).toBe(true);
   });
 
   it('parses the analysis scope flags', () => {

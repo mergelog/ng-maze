@@ -1,5 +1,6 @@
 import type { AmbiguousUsage, AnalysisResult, ComponentId, ComponentInfo, Diagnostic, ExternalUsage, RouteEntry } from '../model/types.js';
 import { compareCodePoint } from '../util/paths.js';
+import { normalizeEdges } from '../analysis/analyze.js';
 import { buildGraph, rootCandidates, reachableFrom, type Graph } from './graph.js';
 import { buildTree, collectTreeIds, createTreeBudget, DEFAULT_MAX_TREE_DEPTH, type Direction, type TreeNode } from './tree.js';
 
@@ -9,6 +10,8 @@ export interface ViewOptions {
   depth?: number | undefined;
   all?: boolean;
   ignoreAmbiguous?: boolean;
+  /** Include source-based route edges in the rendered graph. */
+  withRoutes?: boolean;
 }
 
 export interface ResultStats {
@@ -16,6 +19,7 @@ export interface ResultStats {
   templateUsages: number;
   dynamicUsages: number;
   routeEntries: number;
+  routeEdges: number;
   externalUsages: number;
 }
 
@@ -55,12 +59,15 @@ function statsOf(result: AnalysisResult): ResultStats {
     templateUsages: result.edges.filter((e) => e.kind === 'template').length,
     dynamicUsages: result.edges.filter((e) => e.kind !== 'template').length,
     routeEntries: result.routes.length,
+    routeEdges: result.routeEdges.length,
     externalUsages: result.externalUsages.length,
   };
 }
 
 export function buildView(result: AnalysisResult, options: ViewOptions, selectedId?: ComponentId): QueryView {
-  const graph = buildGraph(result);
+  const graph = buildGraph(options.withRoutes
+    ? { ...result, edges: normalizeEdges([...result.edges, ...result.routeEdges]) }
+    : result);
   const budget = createTreeBudget();
   const defaultDepthState = { exceeded: false };
   const direction: Direction = options.parents ? 'parents' : 'children';
@@ -85,7 +92,8 @@ export function buildView(result: AnalysisResult, options: ViewOptions, selected
     const extendedBy = [...graph.components.values()]
       .filter((candidate) => candidate.extendsComponent === selectedId)
       .sort((a, b) => compareCodePoint(a.id, b.id));
-    const edgesInTree = result.edges.filter((e) => ids.has(e.from) && ids.has(e.to));
+    const edgesInTree = (options.withRoutes ? normalizeEdges([...result.edges, ...result.routeEdges]) : result.edges)
+      .filter((e) => ids.has(e.from) && ids.has(e.to));
 
     return {
       kind: 'component',
@@ -106,8 +114,9 @@ export function buildView(result: AnalysisResult, options: ViewOptions, selected
       resultStats: {
         components: ids.size,
         templateUsages: edgesInTree.filter((e) => e.kind === 'template').length,
-        dynamicUsages: edgesInTree.filter((e) => e.kind !== 'template').length,
+        dynamicUsages: edgesInTree.filter((e) => e.kind !== 'template' && e.kind !== 'router-outlet').length,
         routeEntries: routes.length,
+        routeEdges: edgesInTree.filter((e) => e.kind === 'router-outlet').length,
         externalUsages: externalUsages.length,
       },
       nodeBudgetExceeded: budget.exceeded,

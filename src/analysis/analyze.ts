@@ -106,6 +106,7 @@ export async function analyze(options: AnalyzeOptions): Promise<AnalysisRun> {
     components: [...catalog.components.values()].map((r) => r.info).sort((a, b) => compareCodePoint(a.id, b.id)),
     ngModules: [...catalog.ngModules.values()].map((r) => r.info).sort((a, b) => compareCodePoint(a.id, b.id)),
     edges,
+    routeEdges: normalizeEdges(routes.routeEdges),
     routes: sortRoutes(routes.routes),
     externalUsages: sortExternalUsages(dynamic.externalUsages),
     ambiguousUsages: sortAmbiguousUsages(dynamic.ambiguousUsages),
@@ -163,7 +164,10 @@ export function normalizeEdges(edges: Edge[]): Edge[] {
 
 function sortRoutes(routes: RouteEntry[]): RouteEntry[] {
   return [...routes].sort((a, b) =>
-    compareLocation(a.location, b.location) || compareCodePoint(a.path, b.path) || compareCodePoint(a.target, b.target));
+    compareLocation(a.location, b.location)
+    || compareCodePoint(a.path, b.path)
+    || compareCodePoint(a.target, b.target)
+    || compareCodePoint(a.host ?? '', b.host ?? ''));
 }
 
 function sortExternalUsages(usages: ExternalUsage[]): ExternalUsage[] {

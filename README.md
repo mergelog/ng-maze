@@ -46,6 +46,15 @@ Requires Node.js `^22.22.3 || ^24.15.0 || >=26`.
 `ngmaze` resolves `typescript` and `@angular/compiler` from the analysed project
 first and falls back to its own copies. `--verbose` prints which ones were used.
 
+### Development checkout
+
+After building this repository with `npm run build`, run the local CLI through
+Node rather than `npx`:
+
+```bash
+node dist/cli/index.js --all --md --with-routes -p /path/to/angular/project
+```
+
 ## Usage
 
 ```bash
@@ -56,6 +65,7 @@ npx mergelog/ng-maze ProjectsPageComponent --depth 3  # limit the depth
 npx mergelog/ng-maze MenuItemComponent --parents --why
 npx mergelog/ng-maze --all                            # every root tree
 npx mergelog/ng-maze --all --ignore-ambiguous         # hide unresolved dynamic placeholders
+npx mergelog/ng-maze ProjectsPageComponent --with-routes # include source-based route edges
 npx mergelog/ng-maze ProjectsPageComponent -o tree.txt
 npx mergelog/ng-maze --json -o component-graph.json
 npx mergelog/ng-maze ProjectsPageComponent --mdh       # formatter-safe HTML box-drawing Markdown tree at <project>/ng-maze-ProjectsPageComponent-YYYYMMDD-HHMMSS.md
@@ -75,6 +85,7 @@ A component can be named by class name, by selector, or by its full ComponentId
 | `--depth <number>` | limit tree depth (default: 1,000; see the node ceiling below) |
 | `--why` | show kind, file and line for every relation |
 | `--ignore-ambiguous` | hide unresolved dynamic-component placeholders from trees and result views |
+| `--with-routes` | add source-based route edges; outlet placement is not resolved |
 | `--all` | print every root tree plus unreachable components |
 | `--json` | machine readable output |
 | `--mdh` | write a linked box-drawing tree inside HTML `<pre>`; recommended when the Markdown will be formatted |
@@ -148,14 +159,23 @@ under the wrapper to imitate the runtime DOM.
 | `dialog` | `MatDialog.open(Component)` (verified by receiver type, not property name) |
 | `create-component` | `ViewContainerRef.createComponent` and `createComponent` from `@angular/core` |
 | `ng-component-outlet` | `[ngComponentOutlet]` resolving statically to a component class |
+| `router-outlet` | an opt-in, source-based connection from a route host to its route target |
 
-Routes and non-component callers are deliberately **not** component parents:
+Routes and non-component callers are deliberately **not** component parents by default:
 
 * `Route entries` list `component` / `loadComponent` targets,
 * `External usages` list services, effects, plain functions and top level code
   that create components.
 
 Both are printed in their own sections and are excluded from the `参照元` count.
+
+`--with-routes` adds `router-outlet` edges to the tree. A route target is linked
+from the nearest ancestor route with a `component` or `loadComponent` target;
+component-less intermediate routes pass that host through. This is a connection
+derived from route definitions, **not** a claim about where a `<router-outlet>`
+is physically placed at runtime. Named outlets are shown as `@name` annotations
+only. Route-edge locations point to the route definition (rather than a
+template), which makes `--why` useful for navigating directly to its source.
 
 If a component directly extends another internal component, its tree label is
 annotated as `PipelineCardComponent [extends ProjectCardComponent]`. Inheritance

@@ -55,7 +55,7 @@ export interface NgModuleInfo {
   unresolved: boolean;
 }
 
-export type EdgeKind = 'template' | 'ng-component-outlet' | 'dialog' | 'create-component';
+export type EdgeKind = 'template' | 'ng-component-outlet' | 'dialog' | 'create-component' | 'router-outlet';
 
 /** Display / ordering precedence of edge kinds (plan section 28.1). */
 export const EDGE_KIND_ORDER: readonly EdgeKind[] = [
@@ -63,6 +63,7 @@ export const EDGE_KIND_ORDER: readonly EdgeKind[] = [
   'ng-component-outlet',
   'dialog',
   'create-component',
+  'router-outlet',
 ];
 
 export interface Edge {
@@ -72,6 +73,8 @@ export interface Edge {
   location: SourceLocation;
   /** Stable order index inside `from` (source order, kind grouped). */
   order: number;
+  /** Present only for source-based router-outlet edges. */
+  route?: { path: string; outlet: string | null };
 }
 
 export type RouteTargetKind = 'component' | 'loadComponent';
@@ -81,6 +84,8 @@ export interface RouteEntry {
   path: string;
   target: ComponentId;
   targetKind: RouteTargetKind;
+  /** Nearest ancestor route with a component target, or null at a route root. */
+  host: ComponentId | null;
   /** Named RouterOutlet, or null for Angular's primary outlet. */
   outlet: string | null;
   location: SourceLocation;
@@ -179,6 +184,8 @@ export interface AnalysisResult {
   components: ComponentInfo[];
   ngModules: NgModuleInfo[];
   edges: Edge[];
+  /** Source-based route edges, kept out of `edges` unless a query opts in. */
+  routeEdges: Edge[];
   routes: RouteEntry[];
   externalUsages: ExternalUsage[];
   ambiguousUsages: AmbiguousUsage[];

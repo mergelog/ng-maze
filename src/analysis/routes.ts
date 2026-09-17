@@ -1,5 +1,5 @@
 import type * as TS from 'typescript';
-import type { ComponentId, DetectionGap, Diagnostic, RouteEntry, SourceLocation } from '../model/types.js';
+import type { ComponentId, DetectionGap, Diagnostic, Edge, RouteEntry, SourceLocation } from '../model/types.js';
 import { absPosix } from '../util/paths.js';
 import type { ProgramContext } from '../project/program.js';
 import { projectOfFile } from '../project/workspace.js';
@@ -9,6 +9,7 @@ import type { SymbolResolver } from './symbols.js';
 
 export interface RouteAnalysis {
   routes: RouteEntry[];
+  routeEdges: Edge[];
   diagnostics: Diagnostic[];
   detectionGaps: DetectionGap[];
 }
@@ -29,6 +30,7 @@ export function analyzeRoutes(
 ): RouteAnalysis {
   const ts = ctx.ts;
   const routes: RouteEntry[] = [];
+  const routeEdges: Edge[] = [];
   const diagnostics: Diagnostic[] = [];
   const detectionGaps: DetectionGap[] = [];
   const workspaceRoot = ctx.workspace.workspaceRoot;
@@ -254,10 +256,11 @@ export function analyzeRoutes(
       : undefined;
   };
 
-  const readRouteObject = (object: TS.ObjectLiteralExpression, parentPath: string): void => {
+  const readRouteObject = (object: TS.ObjectLiteralExpression, parentPath: string, hostTarget: ComponentId | null): void => {
     const seenPaths = visitedRouteObjects.get(object) ?? new Set<string>();
-    if (seenPaths.has(parentPath)) return;
-    seenPaths.add(parentPath);
+    const visitKey = `${parentPath}\0${hostTarget ?? ''}`;
+    if (seenPaths.has(visitKey)) return;
+    seenPaths.add(visitKey);
     visitedRouteObjects.set(object, seenPaths);
 
     const propertyNode = (name: string): TS.Expression | undefined => propertyOf(object, name);
@@ -269,13 +272,25 @@ export function analyzeRoutes(
     const location = locationOf(ctx, object);
     const angularProject = projectOfFile(ctx.workspace.projects, absPosix(object.getSourceFile().fileName));
 
+    let resolvedTarget: ComponentId | null = null;
+    const addRoute = (id: ComponentId, targetKind: RouteEntry['targetKind']): void => {
+      routes.push({ path: fullPath, target: id, targetKind, host: hostTarget, outlet, location, angularProject });
+      if (hostTarget !== null) {
+        routeEdges.push({
+          from: hostTarget, to: id, kind: 'router-outlet',
+          route: { path: fullPath, outlet }, location, order: 0,
+        });
+      }
+      resolvedTarget = id;
+    };
+
     const componentNode = propertyNode('component');
     if (componentNode) {
       const value = evaluator.evaluate(componentNode);
       if (value.k === 'class' && symbols.isInternalFile(value.ref.file)) {
         const id = makeComponentId(workspaceRoot, value.ref.file, value.ref.name);
         if (catalog.components.has(id)) {
-          routes.push({ path: fullPath, target: id, targetKind: 'component', outlet, location, angularProject });
+          addRoute(id, 'component');
         } else {
           addDiagnostic(`Route "${fullPath}" targets an internal class that is not in the component catalog.`, location, id);
         }
@@ -290,7 +305,7 @@ export function analyzeRoutes(
       const ids = [...new Set(resolved.symbols.flatMap((symbol) => componentIdOfSymbol(symbol) ?? []))].sort();
       if (resolved.complete && ids.length === 1) {
         const id = ids[0]!;
-        routes.push({ path: fullPath, target: id, targetKind: 'loadComponent', outlet, location, angularProject });
+        addRoute(id, 'loadComponent');
       } else {
         addDiagnostic(`Route "${fullPath}" has a loadComponent that could not be resolved to one component statically.`, location, undefined, ids);
       }
@@ -298,14 +313,14 @@ export function analyzeRoutes(
 
     const childrenNode = propertyNode('children');
     if (childrenNode) {
-      walkRouteArray(childrenNode, fullPath);
+      walkRouteArray(childrenNode, fullPath, resolvedTarget ?? hostTarget);
     }
 
     const loadChildrenNode = propertyNode('loadChildren');
     if (loadChildrenNode) {
       const array = loadChildrenArrayOf(loadChildrenNode);
       if (array) {
-        walkRouteArray(array, fullPath);
+        walkRouteArray(array, fullPath, resolvedTarget ?? hostTarget);
       } else {
         const resolved = resolveLazyTargets(loadChildrenNode);
         const detail = resolved.symbols.map((symbol) => `${symbols.originFile(symbol) ?? 'unknown'}#${symbol.getName()}`).join(', ');
@@ -314,9 +329,9 @@ export function analyzeRoutes(
     }
   };
 
-  function walkRouteArray(expression: TS.Expression, parentPath: string): void {
+  function walkRouteArray(expression: TS.Expression, parentPath: string, hostTarget: ComponentId | null): void {
     const { objects, unresolved } = routeObjectsOf(expression);
-    for (const object of objects) readRouteObject(object, parentPath);
+    for (const object of objects) readRouteObject(object, parentPath, hostTarget);
     for (const node of unresolved) {
       addDiagnostic('Route configuration could not be resolved statically.', locationOf(ctx, node));
     }
@@ -390,7 +405,7 @@ export function analyzeRoutes(
   const mountedSeen = new Set<TS.ObjectLiteralExpression>();
   for (const root of [...providerRoots, ...annotatedRoots]) collectMounted(root, mountedSeen);
 
-  for (const root of providerRoots) walkRouteArray(root, '/');
+  for (const root of providerRoots) walkRouteArray(root, '/', null);
 
   for (const root of annotatedRoots) {
     const { objects } = routeObjectsOf(root);
@@ -398,8 +413,8 @@ export function analyzeRoutes(
     if (objects.length > 0 && objects.every((object) => mountedAsChild.has(object) || visitedRouteObjects.has(object))) {
       continue;
     }
-    walkRouteArray(root, '/');
+    walkRouteArray(root, '/', null);
   }
 
-  return { routes, diagnostics, detectionGaps };
+  return { routes, routeEdges, diagnostics, detectionGaps };
 }

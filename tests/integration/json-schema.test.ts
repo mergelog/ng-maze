@@ -92,4 +92,20 @@ describe('JSON schema (plan section 32)', () => {
     expect(document.result.ambiguousUsages).toHaveLength(5);
     expect(document.query.ignoreAmbiguous).toBe(false);
   });
+
+  it('serializes route edges and route hosts whether or not the tree opts in', async () => {
+    const { result } = await analyzeFixture('main');
+    const selection = selectComponent(result, 'RoutePageComponent');
+    expect(selection.kind).toBe('found');
+    const view = buildView(result, { component: 'RoutePageComponent', withRoutes: true }, selection.kind === 'found' ? selection.id : undefined);
+    const document = JSON.parse(renderJson(view, result, {
+      component: 'RoutePageComponent', direction: 'children', depth: null, all: false, why: false, withRoutes: true,
+    }, '0.0.0', null));
+    check(document);
+    expect(document.result.routeEdges).toContainEqual(expect.objectContaining({
+      kind: 'router-outlet', route: { path: '/shell/mounted', outlet: null },
+    }));
+    expect(document.result.routes.find((route: { path: string }) => route.path === '/shell').host).toBeNull();
+    expect(document.query.withRoutes).toBe(true);
+  });
 });

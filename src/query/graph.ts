@@ -33,7 +33,9 @@ export function buildGraph(result: AnalysisResult): Graph {
 
   const referenceCount = new Map<ComponentId, number>();
   for (const [id, incoming] of parents) {
-    referenceCount.set(id, new Set(incoming.map((e) => e.from)).size);
+    // Route relationships describe navigation, not template references.
+    const componentUsages = incoming.filter((edge) => edge.kind !== 'router-outlet');
+    referenceCount.set(id, new Set(componentUsages.map((e) => e.from)).size);
   }
 
   return { components, children, parents, referenceCount };
@@ -42,7 +44,7 @@ export function buildGraph(result: AnalysisResult): Graph {
 /** Root candidates: component in-degree 0. Routes and external usages do not count. */
 export function rootCandidates(graph: Graph): ComponentId[] {
   return [...graph.components.keys()]
-    .filter((id) => (graph.parents.get(id)?.length ?? 0) === 0)
+    .filter((id) => !(graph.parents.get(id) ?? []).some((edge) => edge.kind !== 'router-outlet'))
     .sort(compareCodePoint);
 }
 

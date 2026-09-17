@@ -9,6 +9,7 @@ export interface CliOptions {
   depth: number | undefined;
   why: boolean;
   ignoreAmbiguous: boolean;
+  withRoutes: boolean;
   all: boolean;
   json: boolean;
   md: boolean;
@@ -31,6 +32,7 @@ export function buildCommand(version: string): Command {
     .option('--depth <number>', 'limit tree depth (default: 1000)')
     .option('--why', 'show why each relation exists (kind, file, line)', false)
     .option('--ignore-ambiguous', 'hide unresolved dynamic-component placeholders from trees', false)
+    .option('--with-routes', 'add route edges to the tree (source-based; outlet position is not resolved)', false)
     .option('--all', 'print the tree of every root component', false)
     .option('--json', 'print the result as JSON', false)
     .option('--md', 'write a linked Markdown tree to ng-maze-[ComponentName-]YYYYMMDD-HHMMSS.md in the analysis root', false)
@@ -97,6 +99,7 @@ export function parseArgs(argv: string[], version: string): CliOptions {
     depth,
     why: Boolean(raw.why),
     ignoreAmbiguous: Boolean(raw.ignoreAmbiguous),
+    withRoutes: Boolean(raw.withRoutes),
     all: Boolean(raw.all),
     json: Boolean(raw.json),
     md: Boolean(raw.md),

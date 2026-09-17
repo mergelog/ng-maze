@@ -10,6 +10,7 @@ export interface JsonQuery {
   all: boolean;
   why: boolean;
   ignoreAmbiguous?: boolean;
+  withRoutes?: boolean;
 }
 
 export interface JsonError {
@@ -23,7 +24,7 @@ interface JsonTreeNode {
   className: string;
   cycle: boolean;
   truncated: boolean;
-  occurrences: { kind: Edge['kind']; location: SourceLocation }[];
+  occurrences: { kind: Edge['kind']; location: SourceLocation; route?: Edge['route'] }[];
   children: JsonTreeNode[];
   ambiguousChildren: AnalysisResult['ambiguousUsages'];
 }
@@ -44,7 +45,7 @@ export function renderJson(
 ): string {
   const document: Record<string, unknown> = {
     ngmazeVersion: version,
-    query: { ...query, ignoreAmbiguous: query.ignoreAmbiguous ?? false },
+    query: { ...query, ignoreAmbiguous: query.ignoreAmbiguous ?? false, withRoutes: query.withRoutes ?? false },
     meta: result.meta,
     global: {
       stats: globalStats(result),
@@ -63,16 +64,18 @@ function globalStats(result: AnalysisResult): ResultStats {
     templateUsages: result.edges.filter((e) => e.kind === 'template').length,
     dynamicUsages: result.edges.filter((e) => e.kind !== 'template').length,
     routeEntries: result.routes.length,
+    routeEdges: result.routeEdges.length,
     externalUsages: result.externalUsages.length,
   };
 }
 
 function emptyResult(): Record<string, unknown> {
   return {
-    stats: { components: 0, templateUsages: 0, dynamicUsages: 0, routeEntries: 0, externalUsages: 0 },
+    stats: { components: 0, templateUsages: 0, dynamicUsages: 0, routeEntries: 0, routeEdges: 0, externalUsages: 0 },
     rootCandidates: [],
     components: [],
     edges: [],
+    routeEdges: [],
     routes: [],
     externalUsages: [],
     ambiguousUsages: [],
@@ -87,7 +90,7 @@ function toJsonTree(view: QueryView, node: TreeNode): JsonTreeNode {
   const root: JsonTreeNode = {
     id: node.id, className: view.graph.components.get(node.id)?.className ?? node.id,
     cycle: node.cycle, truncated: node.truncated,
-    occurrences: node.occurrences.map((occurrence) => ({ kind: occurrence.kind, location: occurrence.location })),
+    occurrences: node.occurrences.map((occurrence) => ({ kind: occurrence.kind, location: occurrence.location, ...(occurrence.route ? { route: occurrence.route } : {}) })),
     children: [], ambiguousChildren: node.ambiguousChildren,
   };
   const stack: Array<{ source: TreeNode; target: JsonTreeNode }> = [{ source: node, target: root }];
@@ -97,7 +100,7 @@ function toJsonTree(view: QueryView, node: TreeNode): JsonTreeNode {
       const converted: JsonTreeNode = {
         id: child.id, className: view.graph.components.get(child.id)?.className ?? child.id,
         cycle: child.cycle, truncated: child.truncated,
-        occurrences: child.occurrences.map((occurrence) => ({ kind: occurrence.kind, location: occurrence.location })),
+        occurrences: child.occurrences.map((occurrence) => ({ kind: occurrence.kind, location: occurrence.location, ...(occurrence.route ? { route: occurrence.route } : {}) })),
         children: [], ambiguousChildren: child.ambiguousChildren,
       };
       target.children.push(converted);
@@ -116,12 +119,17 @@ function resultSection(view: QueryView, result: AnalysisResult): Record<string, 
   }
 
   const edges = result.edges.filter((edge) => ids.has(edge.from) && ids.has(edge.to));
+  // Route edges remain available in JSON irrespective of --with-routes.  A
+  // component query includes every route relation touching its visible tree,
+  // including an incoming host that is not otherwise part of that tree.
+  const routeEdges = result.routeEdges.filter((edge) => ids.has(edge.from) || ids.has(edge.to));
 
   return {
     stats: view.resultStats,
     rootCandidates: view.rootCandidates,
     components: result.components.filter((component) => ids.has(component.id)),
     edges,
+    routeEdges,
     routes: view.routes,
     externalUsages: view.externalUsages,
     ambiguousUsages: view.ambiguousUsages,

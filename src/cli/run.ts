@@ -118,6 +118,7 @@ export async function run(options: CliOptions, io: Io, version: string): Promise
       all: options.all,
       why: options.why,
       ignoreAmbiguous: options.ignoreAmbiguous,
+      withRoutes: options.withRoutes,
     }, version, jsonError);
   } else if (markdown && view) {
     text = renderMarkdown(view, {

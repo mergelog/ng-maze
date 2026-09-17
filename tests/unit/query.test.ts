@@ -38,6 +38,7 @@ const result = (components: ComponentInfo[], edges: Edge[]): AnalysisResult => (
   components,
   ngModules: [],
   edges: normalizeEdges(edges),
+  routeEdges: [],
   routes: [],
   externalUsages: [],
   ambiguousUsages: [],
@@ -92,6 +93,25 @@ describe('reference count (plan section 30)', () => {
       [edge('a.ts#A', 'b.ts#B', 'template', 1)],
     ));
     expect(rootCandidates(graph)).toEqual(['a.ts#A']);
+  });
+
+  it('keeps route edges out of reference counts and root candidates', () => {
+    const source = result(
+      [component('a.ts#A', 'A', 'a'), component('b.ts#B', 'B', 'b')],
+      [],
+    );
+    source.routeEdges = normalizeEdges([{ ...edge('a.ts#A', 'b.ts#B', 'router-outlet', 1), route: { path: '/b', outlet: null } }]);
+    const withoutRoutes = buildView(source, {});
+    const withRoutes = buildView(source, { withRoutes: true }, 'a.ts#A');
+    expect(withoutRoutes.rootCandidates).toEqual(['a.ts#A', 'b.ts#B']);
+    expect(withRoutes.rootCandidates).toEqual(['a.ts#A', 'b.ts#B']);
+    expect(withRoutes.graph.referenceCount.get('b.ts#B')).toBe(0);
+    expect(withRoutes.tree!.children.map((child) => child.id)).toEqual(['b.ts#B']);
+    expect(withRoutes.tree!.children[0]!.occurrences[0]!.route).toEqual({ path: '/b', outlet: null });
+    expect(renderText(withRoutes, { why: false, color: false })).toContain("[route: 'b']");
+    expect(renderMarkdown(withRoutes, { outputRoot: '/ws', treeStyle: 'list' })).toContain("[route: 'b']");
+    expect(renderMarkdown(withRoutes, { outputRoot: '/ws', treeStyle: 'box' })).toContain("[route: 'b']");
+    expect(renderMarkdown(withRoutes, { outputRoot: '/ws', treeStyle: 'html' })).toContain("[route: 'b']");
   });
 });
 

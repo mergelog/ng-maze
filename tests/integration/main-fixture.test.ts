@@ -267,6 +267,38 @@ describe('main fixture', () => {
     it('keeps routes out of the component edge list', () => {
       expect(result.edges.some((e) => e.to.includes('RoutePageComponent'))).toBe(false);
     });
+
+    it('records source-based route edges separately with the nearest component host', () => {
+      const shell = byClass('RoutePageComponent')[0]!;
+      const lazy = byClass('LazyPageComponent')[0]!;
+      const mounted = byClass('ChildPageComponent')[0]!;
+      const named = byClass('DefaultExportPageComponent')[0]!;
+      const shellMounted = result.routes.find((route) => route.path === '/shell/mounted')!;
+      expect(shellMounted.host).toBe(shell.id);
+      expect(result.routeEdges).toContainEqual(expect.objectContaining({
+        from: shell.id, to: mounted.id, kind: 'router-outlet', route: { path: '/shell/mounted', outlet: null },
+      }));
+      expect(result.routeEdges).toContainEqual(expect.objectContaining({
+        from: lazy.id, to: mounted.id, kind: 'router-outlet', route: { path: '/alternate-shell/mounted', outlet: null },
+      }));
+      expect(result.routeEdges).toContainEqual(expect.objectContaining({
+        from: shell.id, to: named.id, kind: 'router-outlet', route: { path: '/shell/named', outlet: 'side' },
+      }));
+      expect(result.routes.find((route) => route.path === '/page')!.host).toBeNull();
+    });
+
+    it('adds route edges to a view only with the opt-in flag', () => {
+      const shell = byClass('RoutePageComponent')[0]!;
+      expect(buildView(result, {}, shell.id).tree!.children.some((child) => child.id.endsWith('#ChildPageComponent'))).toBe(false);
+      const routed = buildView(result, { withRoutes: true }, shell.id);
+      const mounted = routed.tree!.children.find((child) => child.id.endsWith('#ChildPageComponent'))!;
+      expect(mounted.occurrences.map((edge) => edge.route?.path).sort()).toEqual([
+        '/shell/lazy/deep', '/shell/mounted',
+      ]);
+      const named = routed.tree!.children.find((child) => child.id.endsWith('#DefaultExportPageComponent'))!;
+      expect(named.occurrences[0]!.route).toEqual({ path: '/shell/named', outlet: 'side' });
+      expect(routed.graph.referenceCount.get(mounted.id)).toBe(0);
+    });
   });
 
   describe('dynamic components (plan sections 21, 22, 23)', () => {

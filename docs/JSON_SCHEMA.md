@@ -30,6 +30,7 @@ Echoes the request so a stored document explains itself.
 | `all` | whether `--all` was used |
 | `why` | whether `--why` was used (the JSON always carries every occurrence) |
 | `ignoreAmbiguous` | whether `--ignore-ambiguous` was used; `global.detectionGaps` keeps the audit trail either way |
+| `withRoutes` | whether source-based route edges were merged into the rendered tree |
 
 ## `meta`
 
@@ -57,7 +58,7 @@ Both carry `stats` and `diagnostics`:
 ```jsonc
 "global": {
   "stats": { "components": 352, "templateUsages": 704, "dynamicUsages": 66,
-             "routeEntries": 157, "externalUsages": 20 },
+             "routeEntries": 157, "routeEdges": 120, "externalUsages": 20 },
   "diagnostics":   [ /* every diagnostic in the project */ ],
   "detectionGaps": [ /* everything the analysis could not see, project wide */ ]
 }
@@ -79,6 +80,7 @@ does not remove anything from it.
 | `rootCandidates` | components with no component parent (routes and external usages do not count) |
 | `components` | components inside this result |
 | `edges` | component to component relations inside this result |
+| `routeEdges` | source-based route relations inside this result; retained even without `--with-routes` |
 | `routes` | route entries for the queried component, or all of them |
 | `externalUsages` | non component callers, same scoping |
 | `ambiguousUsages` | dynamic component usages whose target is not one component; empty when `--ignore-ambiguous` was used |
@@ -141,12 +143,14 @@ escapes, where the offset cannot be mapped back exactly.
 ### Route entry
 
 ```jsonc
-{ "path": "/projects/:projectId/overview", "target": "…#ProjectInfoComponent",
+{ "path": "/projects/:projectId/overview", "target": "…#ProjectInfoComponent", "host": "…#ProjectsComponent",
   "targetKind": "loadComponent", "location": { … }, "angularProject": "stackup" }
 ```
 
-Routes are never component parents. `path` is the best effort static path, not a
-reproduction of the router runtime configuration.
+`host` is the nearest ancestor route target with a component, or `null` at a
+route root. `routeEdges` are opt-in for tree construction (`--with-routes`) and
+are source-based rather than a reproduction of `<router-outlet>` placement.
+`path` is the best effort static path, not a reproduction of router runtime configuration.
 
 ### External usage
 

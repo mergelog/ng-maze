@@ -43,6 +43,14 @@ Node.js `^22.22.3 || ^24.15.0 || >=26` が必要です。
 
 `ngmaze` は、まず解析対象プロジェクトから `typescript` と `@angular/compiler` を解決し、見つからない場合は自身に同梱されたものを使用します。どちらが使用されたかは `--verbose` で確認できます。
 
+### 開発中のチェックアウト
+
+このリポジトリを `npm run build` でビルドした後は、`npx` ではなく Node からローカル CLI を実行します。
+
+```bash
+node dist/cli/index.js --all --md --with-routes -p /path/to/angular/project
+```
+
 ## 使い方
 
 ```bash
@@ -53,6 +61,7 @@ npx mergelog/ng-maze ProjectsPageComponent --depth 3  # 深さを制限
 npx mergelog/ng-maze MenuItemComponent --parents --why
 npx mergelog/ng-maze --all                            # すべてのルートツリー
 npx mergelog/ng-maze --all --ignore-ambiguous         # 解決できない動的コンポーネントのプレースホルダーを隠す
+npx mergelog/ng-maze ProjectsPageComponent --with-routes # ソース基準の route エッジを追加
 npx mergelog/ng-maze ProjectsPageComponent -o tree.txt
 npx mergelog/ng-maze --json -o component-graph.json
 npx mergelog/ng-maze ProjectsPageComponent --mdh       # <project>/ng-maze-ProjectsPageComponent-YYYYMMDD-HHMMSS.md に formatter耐性のあるHTML罫線ツリーを保存
@@ -70,6 +79,7 @@ npx mergelog/ng-maze ProjectsPageComponent -p /path/to/angular/project
 | `--depth <number>` | ツリーの深さを制限（デフォルト: 1,000。後述のノード上限を参照） |
 | `--why` | すべての関係について、種類、ファイル、行を表示 |
 | `--ignore-ambiguous` | 解決できなかった動的コンポーネントのプレースホルダーを、ツリーと結果ビューから隠す |
+| `--with-routes` | ソース基準の route エッジを追加（outlet の物理配置は解決しない） |
 | `--all` | すべてのルートツリーと到達不能なコンポーネントを表示 |
 | `--json` | 機械可読形式で出力 |
 | `--mdh` | HTML の `<pre>` 内へリンク付き罫線ツリーを保存。Markdown整形後も見やすい形式 |
@@ -113,13 +123,20 @@ npx mergelog/ng-maze ProjectsPageComponent -p /path/to/angular/project
 | `dialog` | `MatDialog.open(Component)`（プロパティ名ではなく、レシーバーの型で検証） |
 | `create-component` | `ViewContainerRef.createComponent` および `@angular/core` の `createComponent` |
 | `ng-component-outlet` | コンポーネントクラスとして静的に解決できる `[ngComponentOutlet]` |
+| `router-outlet` | route host から route target への、オプトインのソース基準接続 |
 
-ルートとコンポーネント以外の呼び出し元は、意図的にコンポーネントの親として扱いません。
+ルートとコンポーネント以外の呼び出し元は、既定では意図的にコンポーネントの親として扱いません。
 
 * `Route entries` には、`component` / `loadComponent` の対象が表示されます。
 * `External usages` には、コンポーネントを生成するサービス、エフェクト、通常の関数、トップレベルコードが表示されます。
 
 どちらも独立したセクションに表示され、`参照元` の数には含まれません。
+
+`--with-routes` を指定すると、`router-outlet` エッジをツリーへ追加します。route target は、最も近い
+`component` または `loadComponent` を持つ祖先 route を host として結線されます。コンポーネントを持たない
+中継 route はこの host をそのまま伝播します。これは route 定義に基づく接続であり、実行時に
+`<router-outlet>` が物理的にどこへ置かれるかを表すものではありません。named outlet は `@name` の注記のみです。
+route エッジの位置はテンプレートではなく route 定義を指すため、`--why` で定義元へ移動できます。
 
 コンポーネントがプロジェクト内の別のコンポーネントを直接継承する場合、ツリーの表示には
 `PipelineCardComponent [extends ProjectCardComponent]` のような注記が付きます。継承はエッジではないため、

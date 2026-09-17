@@ -62,13 +62,24 @@ export function renderMarkdown(view: QueryView, options: MarkdownOptions): strin
 
   /** Same information as the text renderer's occurrence suffix (plan section 25). */
   const kindSuffix = (node: TreeNode): string => {
+    const routes = node.occurrences.filter((occurrence) => occurrence.kind === 'router-outlet' && occurrence.route);
+    const routeLabel = routes.length === 0 ? '' : (() => {
+      const labels = routes.slice(0, 2).map((occurrence) => {
+        const path = occurrence.route!.path.replace(/^\//, '');
+        return `'${path}'${occurrence.route!.outlet ? ` @${occurrence.route!.outlet}` : ''}`;
+      });
+      if (routes.length > 2) labels.push(`… +${routes.length - 2}`);
+      return ` [route: ${labels.join(', ')}]`;
+    })();
     const kinds = new Map<string, number>();
-    for (const occurrence of node.occurrences) kinds.set(occurrence.kind, (kinds.get(occurrence.kind) ?? 0) + 1);
-    if (![...kinds.keys()].some((kind) => kind !== 'template')) return '';
+    for (const occurrence of node.occurrences) {
+      if (occurrence.kind !== 'router-outlet') kinds.set(occurrence.kind, (kinds.get(occurrence.kind) ?? 0) + 1);
+    }
+    if (![...kinds.keys()].some((kind) => kind !== 'template')) return routeLabel;
     const label = kinds.size === 1
       ? `[${[...kinds.keys()][0]}]`
       : `[${[...kinds.entries()].map(([kind, count]) => `${kind}×${count}`).join(', ')}]`;
-    return ` ${label}`;
+    return `${routeLabel} ${label}`;
   };
 
   const treeLabel = (node: TreeNode, isRoot = false): string => {

@@ -9,7 +9,7 @@
     "ngmazeVersion": { "type": "string" },
     "query": {
       "type": "object",
-      "required": ["component", "direction", "depth", "all", "why", "ignoreAmbiguous"],
+      "required": ["component", "direction", "depth", "all", "why", "ignoreAmbiguous", "withRoutes"],
       "additionalProperties": false,
       "properties": {
         "component": { "type": ["string", "null"] },
@@ -17,7 +17,8 @@
         "depth": { "type": ["integer", "null"], "minimum": 1 },
         "all": { "type": "boolean" },
         "why": { "type": "boolean" },
-        "ignoreAmbiguous": { "type": "boolean" }
+        "ignoreAmbiguous": { "type": "boolean" },
+        "withRoutes": { "type": "boolean" }
       }
     },
     "meta": { "$ref": "#/definitions/meta" },
@@ -33,13 +34,14 @@
     },
     "result": {
       "type": "object",
-      "required": ["stats", "rootCandidates", "components", "edges", "routes", "externalUsages", "ambiguousUsages", "tree", "trees", "unreachable", "diagnostics"],
+      "required": ["stats", "rootCandidates", "components", "edges", "routeEdges", "routes", "externalUsages", "ambiguousUsages", "tree", "trees", "unreachable", "diagnostics"],
       "additionalProperties": false,
       "properties": {
         "stats": { "$ref": "#/definitions/stats" },
         "rootCandidates": { "type": "array", "items": { "type": "string" } },
         "components": { "type": "array", "items": { "$ref": "#/definitions/component" } },
         "edges": { "type": "array", "items": { "$ref": "#/definitions/edge" } },
+        "routeEdges": { "type": "array", "items": { "$ref": "#/definitions/edge" } },
         "routes": { "type": "array", "items": { "$ref": "#/definitions/route" } },
         "externalUsages": { "type": "array", "items": { "$ref": "#/definitions/externalUsage" } },
         "ambiguousUsages": { "type": "array", "items": { "$ref": "#/definitions/ambiguousUsage" } },
@@ -90,13 +92,14 @@
     },
     "stats": {
       "type": "object",
-      "required": ["components", "templateUsages", "dynamicUsages", "routeEntries", "externalUsages"],
+      "required": ["components", "templateUsages", "dynamicUsages", "routeEntries", "routeEdges", "externalUsages"],
       "additionalProperties": false,
       "properties": {
         "components": { "type": "integer", "minimum": 0 },
         "templateUsages": { "type": "integer", "minimum": 0 },
         "dynamicUsages": { "type": "integer", "minimum": 0 },
         "routeEntries": { "type": "integer", "minimum": 0 },
+        "routeEdges": { "type": "integer", "minimum": 0 },
         "externalUsages": { "type": "integer", "minimum": 0 }
       }
     },
@@ -134,7 +137,7 @@
         "location": { "$ref": "#/definitions/location" }
       }
     },
-    "edgeKind": { "enum": ["template", "ng-component-outlet", "dialog", "create-component"] },
+    "edgeKind": { "enum": ["template", "ng-component-outlet", "dialog", "create-component", "router-outlet"] },
     "edge": {
       "type": "object",
       "required": ["from", "to", "kind", "location", "order"],
@@ -144,17 +147,27 @@
         "to": { "type": "string" },
         "kind": { "$ref": "#/definitions/edgeKind" },
         "location": { "$ref": "#/definitions/location" },
-        "order": { "type": "integer", "minimum": 0 }
+        "order": { "type": "integer", "minimum": 0 },
+        "route": {
+          "type": "object",
+          "required": ["path", "outlet"],
+          "additionalProperties": false,
+          "properties": {
+            "path": { "type": "string" },
+            "outlet": { "type": ["string", "null"] }
+          }
+        }
       }
     },
     "route": {
       "type": "object",
-      "required": ["path", "target", "targetKind", "outlet", "location", "angularProject"],
+      "required": ["path", "target", "targetKind", "host", "outlet", "location", "angularProject"],
       "additionalProperties": false,
       "properties": {
         "path": { "type": "string" },
         "target": { "type": "string" },
         "targetKind": { "enum": ["component", "loadComponent"] },
+        "host": { "type": ["string", "null"] },
         "outlet": { "type": ["string", "null"] },
         "location": { "$ref": "#/definitions/location" },
         "angularProject": { "type": ["string", "null"] }
@@ -237,7 +250,16 @@
             "additionalProperties": false,
             "properties": {
               "kind": { "$ref": "#/definitions/edgeKind" },
-              "location": { "$ref": "#/definitions/location" }
+              "location": { "$ref": "#/definitions/location" },
+              "route": {
+                "type": "object",
+                "required": ["path", "outlet"],
+                "additionalProperties": false,
+                "properties": {
+                  "path": { "type": "string" },
+                  "outlet": { "type": ["string", "null"] }
+                }
+              }
             }
           }
         },

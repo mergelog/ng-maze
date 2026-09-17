@@ -35,8 +35,19 @@ function occurrenceSuffix(occurrences: Edge[], why: boolean): string {
   const parts: string[] = [];
   if (occurrences.length > 1) parts.push(`×${occurrences.length}`);
   if (!why) {
+    const routes = occurrences.filter((occurrence) => occurrence.kind === 'router-outlet' && occurrence.route);
+    if (routes.length > 0) {
+      const labels = routes.slice(0, 2).map((occurrence) => {
+        const path = occurrence.route!.path.replace(/^\//, '');
+        return `'${path}'${occurrence.route!.outlet ? ` @${occurrence.route!.outlet}` : ''}`;
+      });
+      if (routes.length > 2) labels.push(`… +${routes.length - 2}`);
+      parts.push(`[route: ${labels.join(', ')}]`);
+    }
     const kinds = new Map<string, number>();
-    for (const occurrence of occurrences) kinds.set(occurrence.kind, (kinds.get(occurrence.kind) ?? 0) + 1);
+    for (const occurrence of occurrences) {
+      if (occurrence.kind !== 'router-outlet') kinds.set(occurrence.kind, (kinds.get(occurrence.kind) ?? 0) + 1);
+    }
     if ([...kinds.keys()].some((kind) => kind !== 'template')) {
       // Plan section 25: an aggregated edge never loses its kinds.
       const label = kinds.size === 1
