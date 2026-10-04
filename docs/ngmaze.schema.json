@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/axentax/ng-maze/docs/ngmaze.schema.json",
+  "$id": "https://github.com/mergelog/ng-maze/docs/ngmaze.schema.json",
   "title": "ngmaze analysis output",
   "type": "object",
   "required": ["ngmazeVersion", "query", "meta", "global", "result", "error"],
