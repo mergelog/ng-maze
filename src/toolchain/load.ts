@@ -41,9 +41,16 @@ export interface AngularCompilerApi {
 
 /** Ranges the contract tests in `tests/contract` actually cover. */
 export const CONTRACT_TESTED = {
-  typescript: /^6\.0\./,
-  angularCompiler: /^22\./,
+  typescript: /^(5\.[89]|6\.0)\./,
+  angularCompiler: /^(20|22)\./,
 };
+
+export function supportedToolchain(ngVersion: string, tsVersion: string): boolean {
+  const [major, minor] = ngVersion.split('.').map(Number);
+  return major === 20
+    ? /^5\.8\./.test(tsVersion) || (minor! >= 2 && /^5\.9\./.test(tsVersion))
+    : major === 22 && /^6\.0\./.test(tsVersion);
+}
 
 function findPackageDir(startDir: string, name: string): string | undefined {
   let dir = path.resolve(startDir);
@@ -153,10 +160,15 @@ export async function loadToolchain(startDir: string): Promise<Toolchain> {
   }
 
   if (!CONTRACT_TESTED.typescript.test(tsVersion)) {
-    warnings.push(`typescript ${tsVersion} is outside the contract tested range (6.0.x). Analysis continues but this version is unverified.`);
+    warnings.push(`typescript ${tsVersion} is outside the contract tested range (5.8.x, 5.9.x, 6.0.x). Analysis continues but this version is unverified.`);
   }
   if (!CONTRACT_TESTED.angularCompiler.test(ngVersion)) {
-    warnings.push(`@angular/compiler ${ngVersion} is outside the contract tested range (22.x). Analysis continues but this version is unverified.`);
+    warnings.push(`@angular/compiler ${ngVersion} is outside the contract tested range (20.x, 22.x). Analysis continues but this version is unverified.`);
+  }
+  if (CONTRACT_TESTED.typescript.test(tsVersion) && CONTRACT_TESTED.angularCompiler.test(ngVersion) &&
+    !supportedToolchain(ngVersion, tsVersion)) {
+    warnings.push(`typescript ${tsVersion} / @angular/compiler ${ngVersion} is outside the tested version combinations. ` +
+      'Angular 20.0/20.1 uses TS 5.8, Angular 20.2/20.3 uses TS 5.8/5.9, Angular 22 uses TS 6.0.');
   }
 
   return { ts, tsVersion, tsSource, tsPath, ng, ngVersion, ngSource, ngPath, warnings };

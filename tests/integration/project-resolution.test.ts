@@ -125,8 +125,8 @@ describe('toolchain resolution (plan section 1.1)', () => {
     const { result } = await analyzeFixture('main');
     expect(result.meta.typescriptSource).toBe('project');
     expect(result.meta.angularCompilerSource).toBe('project');
-    expect(result.meta.typescriptVersion).toMatch(/^6\./);
-    expect(result.meta.angularCompilerVersion).toMatch(/^22\./);
+    expect(result.meta.typescriptVersion).toBe('5.9.3');
+    expect(result.meta.angularCompilerVersion).toBe('20.3.33');
   });
 
   it('resolves project dependencies through a symlinked project root', async () => {

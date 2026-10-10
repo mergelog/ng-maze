@@ -20,7 +20,7 @@ describe('@angular/compiler contract', () => {
   });
 
   it('resolves the expected Angular compiler major', () => {
-    expect(version).toMatch(/^22\./);
+    expect(version).toBe('20.3.33');
   });
 
   it('parses a template and reports no errors for valid input', () => {
@@ -141,7 +141,7 @@ describe('@angular/compiler contract', () => {
     });
 
     it('reports one hit per registered selector list even when several parts match', () => {
-      // Measured behaviour of 22.1.5: SelectorMatcher keeps a per selector list
+      // Measured behaviour of 20.3.33: SelectorMatcher keeps a per selector list
       // "already matched" flag, so a comma selector reports its context once.
       // ngmaze still dedupes by component id above the adapter (plan section 17)
       // because the same component can reach the index more than once.

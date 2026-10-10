@@ -41,7 +41,9 @@ npx mergelog/ng-maze --all --mdh -p .
 This repository is not currently published to npm, so run it directly with
 `npx mergelog/ng-maze`. The `-p .` option analyses the current directory.
 
-Requires Node.js `^22.22.3 || ^24.15.0 || >=26`.
+Requires Node.js `^22.22.0 || ^24.15.0 || >=26`. Supports Angular 20 and 22 projects.
+Angular 20.0/20.1 uses TypeScript 5.8; 20.2/20.3 supports 5.8 or 5.9. Angular 22 uses TypeScript 6.0.
+The bundled fallback is Angular compiler 20.3.33 and TypeScript 5.9.3; project-installed compilers take priority.
 
 `ngmaze` resolves `typescript` and `@angular/compiler` from the analysed project
 first and falls back to its own copies. `--verbose` prints which ones were used.

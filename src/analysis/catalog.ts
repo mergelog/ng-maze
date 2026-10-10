@@ -201,7 +201,7 @@ export function buildCatalog(
       if (standaloneValue !== undefined && standaloneExplicit === null) {
         diag('component-metadata', `standalone flag of ${name} could not be evaluated statically.`, location, id);
       }
-      // Angular 22: only an explicit `standalone: false` opts into NgModule scope.
+      // Angular 20/22: only an explicit `standalone: false` opts into NgModule scope.
       const effectiveStandalone = standaloneExplicit !== false;
 
       const templateValue = objectGet(metadata, 'template');
